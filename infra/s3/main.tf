@@ -19,9 +19,9 @@ resource "aws_s3_bucket_ownership_controls" "personal" {
 resource "aws_s3_bucket_public_access_block" "personal" {
   bucket = aws_s3_bucket.personal.id
 
-  block_public_acls       = false
+  block_public_acls       = true
   block_public_policy     = false
-  ignore_public_acls      = false
+  ignore_public_acls      = true
   restrict_public_buckets = false
 }
 
