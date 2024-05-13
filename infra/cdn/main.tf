@@ -38,7 +38,8 @@ data "aws_iam_policy_document" "cdn" {
     }
 
     resources = [
-      "${module.s3.personal.arn}/resume.pdf"
+      "${module.s3.personal.arn}/resume.pdf",
+      "${module.s3.personal.arn}/index.txt"
     ]
 
     actions = [
