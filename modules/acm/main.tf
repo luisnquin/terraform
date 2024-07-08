@@ -12,16 +12,9 @@ resource "aws_acm_certificate" "this" {
 }
 
 resource "cloudflare_record" "this" {
-  for_each = {
-    for dvo in aws_acm_certificate.this.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-  } }
-
-  name    = each.value.name
-  value   = each.value.record
-  type    = each.value.type
+  type    = tolist(aws_acm_certificate.this.domain_validation_options)[0].resource_record_type
+  name    = tolist(aws_acm_certificate.this.domain_validation_options)[0].resource_record_name
+  value   = tolist(aws_acm_certificate.this.domain_validation_options)[0].resource_record_value
   zone_id = data.cloudflare_zone.this.zone_id
 
   depends_on = [
