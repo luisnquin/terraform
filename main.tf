@@ -37,7 +37,7 @@ module "wishlist" {
     personal_bucket = "Origin access identity for my wishlist"
   }
 
-  default_root_object = "public/wishlist/index.html"
+  default_root_object = "public/wishlist/index.txt"
 
   origin = {
     personal_bucket = {
