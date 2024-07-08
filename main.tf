@@ -1,20 +1,20 @@
 
-module "s3" {
-  source = "../s3"
-
-  cloudflare_api_token = var.cloudflare_api_token
+module "personal_s3" {
+  source = "./modules/s3"
 }
 
-module "acm" {
-  source = "../acm"
+module "luis_quinones_me_acm" {
+  source = "./modules/acm"
 
-  cloudflare_api_token = var.cloudflare_api_token
-  cloudflare_zone_id   = var.cloudflare_zone_id
+  domain_name = "luisquinones.me"
+
+  providers = {
+    aws = aws.virginia
+  }
 }
-
 
 resource "aws_s3_object" "root" {
-  bucket       = module.s3.personal.id
+  bucket       = module.personal_s3.id
   key          = "index.txt"
   content_type = "text/plain"
   source       = "assets/index.txt"
@@ -38,8 +38,8 @@ data "aws_iam_policy_document" "cdn" {
     }
 
     resources = [
-      "${module.s3.personal.arn}/resume.pdf",
-      "${module.s3.personal.arn}/index.txt"
+      "${module.personal_s3.arn}/resume.pdf",
+      "${module.personal_s3.arn}/index.txt"
     ]
 
     actions = [
@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "cdn" {
 }
 
 resource "aws_s3_bucket_policy" "cdn" {
-  bucket = module.s3.personal.id
+  bucket = module.personal_s3.id
   policy = data.aws_iam_policy_document.cdn.json
 }
 
@@ -62,8 +62,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   aliases = ["cdn.luisquinones.me"]
 
   origin {
-    origin_id   = module.s3.personal.bucket_domain_name
-    domain_name = module.s3.personal.bucket_domain_name
+    origin_id   = module.personal_s3.bucket_domain_name
+    domain_name = module.personal_s3.bucket_domain_name
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.cdn.cloudfront_access_identity_path
     }
@@ -72,7 +72,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = module.s3.personal.bucket_domain_name
+    target_origin_id = module.personal_s3.bucket_domain_name
 
     forwarded_values {
       query_string = false
@@ -105,7 +105,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = module.acm.luisquinones_me_arn
+    acm_certificate_arn            = module.luis_quinones_me_acm.acm_arn
     cloudfront_default_certificate = false
     ssl_support_method             = "sni-only"
     minimum_protocol_version       = "TLSv1.2_2021"
@@ -123,13 +123,19 @@ resource "aws_cloudfront_distribution" "cdn" {
   ]
 }
 
+
+data "cloudflare_zone" "luisquinones_me" {
+  name = "luisquinones.me"
+}
+
 resource "cloudflare_record" "cdn" {
   type    = "CNAME"
   name    = "cdn"
   value   = aws_cloudfront_distribution.cdn.domain_name
   proxied = false
-  zone_id = var.cloudflare_zone_id
+  zone_id = data.cloudflare_zone.luisquinones_me.zone_id
   depends_on = [
     aws_cloudfront_distribution.cdn
   ]
+  comment = "[tf] CNAME record for cdn"
 }

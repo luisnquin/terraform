@@ -1,7 +1,7 @@
 
 
 resource "aws_s3_bucket" "personal" {
-  bucket = "ulznq8eve3wu6ov5vflmbiktx-personal"
+  bucket = "ulznq8eve3wu6ov5vflmbiztx-personal"
   tags = {
     Environment = "global"
     Resources   = "personal"
