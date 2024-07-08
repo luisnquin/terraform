@@ -15,7 +15,7 @@ module "luis_quinones_me_acm" {
 
 resource "aws_s3_object" "root" {
   bucket       = module.personal_s3.id
-  key          = "public/cdn/index.txt"
+  key          = "public/index.txt"
   content_type = "text/plain"
   source       = "assets/index.txt"
   etag         = filemd5("assets/index.txt")
@@ -80,7 +80,7 @@ module "wishlist" {
 module "cdn" {
   source = "terraform-aws-modules/cloudfront/aws"
 
-  aliases = ["cdnx.luisquinones.me"]
+  aliases = ["cdn.luisquinones.me"]
 
   comment                       = "[tf] CloudFront distribution that acts as a personal CDN"
   enabled                       = true
@@ -89,6 +89,7 @@ module "cdn" {
   retain_on_delete              = false
   wait_for_deployment           = false
   create_origin_access_identity = true
+  default_root_object           = "public/index.txt"
   origin_access_identities = {
     personal_bucket = "Origin access identity for ${module.personal_s3.id}"
   }
@@ -96,6 +97,7 @@ module "cdn" {
   origin = {
     personal_bucket = {
       domain_name = module.personal_s3.bucket_domain_name
+      origin_path = "/public"
       s3_origin_config = {
         origin_access_identity = "personal_bucket"
       }
@@ -116,19 +118,6 @@ module "cdn" {
     compress        = true
     query_string    = true
   }
-
-  ordered_cache_behavior = [
-    {
-      path_pattern           = "/public/cdn/*"
-      target_origin_id       = "personal_bucket"
-      viewer_protocol_policy = "redirect-to-https"
-
-      allowed_methods = ["GET", "HEAD", "OPTIONS"]
-      cached_methods  = ["GET", "HEAD"]
-      compress        = true
-      query_string    = false
-    }
-  ]
 
   custom_error_response = {
     error_code            = 403
@@ -156,7 +145,7 @@ data "aws_iam_policy_document" "public" {
     }
 
     resources = [
-      "${module.personal_s3.arn}/public/cdn/*"
+      "${module.personal_s3.arn}/public/*"
     ]
 
     actions = [
@@ -169,7 +158,6 @@ resource "aws_s3_bucket_policy" "cdn" {
   bucket = module.personal_s3.id
   policy = data.aws_iam_policy_document.public.json
 }
-
 
 data "cloudflare_zone" "luisquinones_me" {
   name = "luisquinones.me"
@@ -189,7 +177,7 @@ resource "cloudflare_record" "wishlist" {
 
 resource "cloudflare_record" "cdn" {
   type    = "CNAME"
-  name    = "cdnx"
+  name    = "cdn"
   value   = module.cdn.cloudfront_distribution_domain_name
   proxied = false
   zone_id = data.cloudflare_zone.luisquinones_me.zone_id
