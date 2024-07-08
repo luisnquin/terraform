@@ -186,6 +186,18 @@ data "cloudflare_zone" "luisquinones_me" {
   name = "luisquinones.me"
 }
 
+resource "cloudflare_record" "wishlist" {
+  type    = "CNAME"
+  name    = "wishlist"
+  value   = module.wishlist.cloudfront_distribution_domain_name
+  proxied = false
+  zone_id = data.cloudflare_zone.luisquinones_me.zone_id
+  depends_on = [
+    module.wishlist
+  ]
+  comment = "[tf] CNAME record for wishlist"
+}
+
 resource "cloudflare_record" "cdn" {
   type    = "CNAME"
   name    = "cdnx"
