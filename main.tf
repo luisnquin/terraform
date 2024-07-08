@@ -26,7 +26,7 @@ module "wishlist" {
 
   aliases = ["wishlist.luisquinones.me"]
 
-  comment                       = "[tf] CloudFront distribution to put the wishlist :OOO"
+  comment                       = "[tf] CloudFront distribution to put the wishlist ^^"
   enabled                       = true
   is_ipv6_enabled               = true
   price_class                   = "PriceClass_100"
@@ -36,6 +36,8 @@ module "wishlist" {
   origin_access_identities = {
     personal_bucket = "Origin access identity for my wishlist"
   }
+
+  default_root_object = "public/wishlist/index.html"
 
   origin = {
     personal_bucket = {
@@ -60,19 +62,6 @@ module "wishlist" {
     compress        = true
     query_string    = true
   }
-
-  ordered_cache_behavior = [
-    {
-      path_pattern           = "/public/wishlist/*"
-      target_origin_id       = "personal_bucket"
-      viewer_protocol_policy = "redirect-to-https"
-
-      allowed_methods = ["GET", "HEAD", "OPTIONS"]
-      cached_methods  = ["GET", "HEAD"]
-      compress        = true
-      query_string    = false
-    }
-  ]
 
   custom_error_response = {
     error_code            = 403
